@@ -13,6 +13,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,12 +26,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
     public static int SPLASH_TIME_OUT = 4000;
-
+    Handler handler;
+    Runnable runnable;
+    Timer timer;
     private ListView lv;
+    ProgressBar progressBar;
 
     ArrayList<HashMap<String, String>> contactList;
     private String TAG = MainActivity.class.getSimpleName();
@@ -39,6 +45,26 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        progressBar.setVisibility(View.VISIBLE);
+        timer = new Timer();
+        handler = new Handler();
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                progressBar.setVisibility(View.GONE);
+                timer.cancel();
+            }
+        };
+
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(runnable);
+            }
+        },1000,1500);
+
 //        new Handler().postDelayed(new Runnable() {
 //            @Override
 //            public void run() {
@@ -62,7 +88,11 @@ public class MainActivity extends AppCompatActivity {
                 //String contact = ((TextView) view).getText().toString();
                 JSONArray jsArray = new JSONArray(contactList);
                 Intent i = new Intent(getApplicationContext(), SecondActivity.class);
-                i.putExtra("contactList", jsArray.getString(position));
+                try {
+                    i.putExtra("contactList", jsArray.getString(position));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 startActivity(i);
             }
         });
@@ -74,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
         protected void onPreExecute() {
             super.onPreExecute();
             Toast.makeText(MainActivity.this,"Json Data is downloading",Toast.LENGTH_LONG).show();
-
         }
 
         @Override
